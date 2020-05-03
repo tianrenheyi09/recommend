@@ -72,20 +72,21 @@ class FM(nn.Module):
 
 
     def forward(self, feat_index,feat_value):
-        torch_embeddings_origin = self.em1(feat_index)
+        torch_embeddings_origin = self.em1(feat_index)####shape:batch_size*filed_size*embedding_size
         torch_feat_value_reshape = torch.reshape(feat_value, [-1, self.field_size, 1])
         ######一维特征
-        torch_y_first_order = self.em2((feat_index))
+        torch_y_first_order = self.em2((feat_index))####shape:batch_size*filed_size*1
         torch_w_mul_x = torch.mul(torch_y_first_order, torch_feat_value_reshape)
-        torch_y_first_order = torch.sum(torch_w_mul_x, dim=2)
+        torch_y_first_order = torch.sum(torch_w_mul_x, dim=2)####shape:batch_size*filed_size
         ######二维特征
-        torch_embeddings = torch.mul(torch_embeddings_origin, torch_feat_value_reshape)
+        torch_embeddings = torch.mul(torch_embeddings_origin, torch_feat_value_reshape)####shape:batch_size*filed_size*embedding_size
         # sum_square part 先sum，再square
-        torch_summed_features_emb = torch.sum(torch_embeddings, dim=1)
-        torch_summed_features_emb = torch.pow(torch_summed_features_emb, 2)
+        torch_summed_features_emb = torch.sum(torch_embeddings, dim=1)####shape batch_size*embedding_size
+        torch_summed_features_emb = torch.pow(torch_summed_features_emb, 2)####shape batch_size*embedding_size
         # square_sum part
-        torch_squared_features_emb = torch.pow(torch_embeddings, 2)
-        torch_squared_features_emb_summed = torch.sum(torch_squared_features_emb, dim=1)
+        torch_squared_features_emb = torch.pow(torch_embeddings, 2)####shape batch_size*filed_size*embedding_size
+        torch_squared_features_emb_summed = torch.sum(torch_squared_features_emb, dim=1)####shape batch_size*embedding_size
+
 
         # second order
         torch_y_second_order = 0.5 * torch.sub(torch_summed_features_emb, torch_squared_features_emb_summed)
@@ -157,6 +158,8 @@ class Torch_Deep_FM(nn.Module):
 
     def forward(self,feat_index,feat_value):
         torch_embeddings_origin = self.em1(feat_index)
+        torch_value_origin = torch.reshape(feat_value, [-1,self.field_size, 1])
+        torch_embeddings_origin = torch.mul(torch_embeddings_origin, torch_value_origin)#####共享embedding
         torch_y_deep = torch.reshape(torch_embeddings_origin, [-1, self.field_size * self.embedding_size])
         for i in range(0, len(self.deep_layers)):
             if i == 0:
